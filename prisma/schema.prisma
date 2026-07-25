@@ -1,15 +1,202 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+// prisma/schema.prisma
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AccountStatus {
+  active
+  paused
+  suspended_by_provider
+  warming_up
+}
+
+enum CampaignStatus {
+  draft
+  active
+  paused
+  completed
+}
+
+enum LeadStatus {
+  pending
+  sent
+  followed_up
+  replied
+  bounced
+}
+
+enum SendJobStatus {
+  queued
+  sent
+  failed
+  skipped
+  cancelled
+}
+
+enum SendJobStep {
+  initial
+  follow_up
+}
+
+model GmailAccount {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  email        String    @unique
+  refreshToken String // AES-256-GCM ciphertext, base64 — see Phase 3
+  accessToken  String?
+  tokenExpiry  DateTime?
+
+  dailyLimit  Int      @default(25)
+  sentToday   Int      @default(0)
+  lastResetAt DateTime @default(now())
+
+  status AccountStatus @default(warming_up)
+
+  warmupEnabled     Boolean   @default(true)
+  warmupDay         Int       @default(0)
+  warmupSendsToday  Int       @default(0)
+  warmupTargetToday Int       @default(0)
+  warmupGraduatedAt DateTime?
+
+  bounceCount    Int @default(0)
+  complaintCount Int @default(0)
+  sentCount7d    Int @default(0)
+  replyCount7d   Int @default(0)
+
+  pausedReason String?
+  pausedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statusLogs AccountStatusLog[]
+  sendJobs   SendJob[]
+  messages   Message[]
+
+  @@index([status])
+}
+
+model AccountStatusLog {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  accountId       String        @db.ObjectId
+  account         GmailAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  fromStatus      AccountStatus
+  toStatus        AccountStatus
+  reason          String?
+  metricsSnapshot Json
+  createdAt       DateTime      @default(now())
+
+  @@index([accountId, createdAt])
+}
+
+model Campaign {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  followUpDays Int            @default(4)
+  status       CampaignStatus @default(draft)
+
+  subjectTemplate         String @default("")
+  bodyTemplate            String @default("")
+  followUpSubjectTemplate String @default("")
+  followUpBodyTemplate    String @default("")
+
+  targetTimezone        String  @default("America/New_York")
+  sendWindowStart       Int     @default(9)
+  sendWindowEnd         Int     @default(18)
+  segmentByLeadTimezone Boolean @default(false)
+
+  startAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  leads              Lead[]
+  sendJobs           SendJob[]
+  accountAllocations CampaignAccountAllocation[]
+
+  @@index([status])
+}
+
+model CampaignAccountAllocation {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String   @db.ObjectId
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  accountId  String   @db.ObjectId
+  allocated  Int
+  used       Int      @default(0)
+
+  @@unique([campaignId, accountId])
+}
+
+model Lead {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String     @db.ObjectId
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  email      String
+  fields     Json
+  timezone   String?
+  status     LeadStatus @default(pending)
+  createdAt  DateTime   @default(now())
+
+  sendJobs SendJob[]
+
+  @@unique([campaignId, email])
+  @@index([campaignId, status])
+}
+
+model SendJob {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  leadId         String        @db.ObjectId
+  lead           Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  accountId      String        @db.ObjectId
+  account        GmailAccount  @relation(fields: [accountId], references: [id])
+  campaignId     String        @db.ObjectId
+  campaign       Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  step           SendJobStep
+  status         SendJobStatus @default(queued)
+  gmailThreadId  String?
+  gmailMessageId String?
+  scheduledFor   DateTime
+  sentAt         DateTime?
+  error          String?
+  createdAt      DateTime      @default(now())
+
+  @@index([status, scheduledFor])
+  @@index([accountId, status])
+}
+
+model WarmupJob {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  senderAccountId    String    @db.ObjectId
+  recipientAccountId String    @db.ObjectId
+  status             String    @default("queued")
+  gmailThreadId      String?
+  scheduledFor       DateTime
+  sentAt             DateTime?
+  repliedAt          DateTime?
+  createdAt          DateTime  @default(now())
+
+  @@index([status, scheduledFor])
+  @@index([senderAccountId, recipientAccountId, createdAt])
+}
+
+model Message {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  accountId      String       @db.ObjectId
+  account        GmailAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  gmailMessageId String       @unique
+  gmailThreadId  String
+  label          String
+  fromEmail      String
+  toEmail        String
+  subject        String?
+  snippet        String?
+  isRead         Boolean      @default(false)
+  internalDate   DateTime
+  syncedAt       DateTime     @default(now())
+
+  @@index([accountId, label, internalDate])
 }
