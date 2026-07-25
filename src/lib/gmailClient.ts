@@ -121,6 +121,77 @@ export async function getGmailClient(
   return google.gmail({ version: "v1", auth: client });
 }
 
+// lib/gmailClient.ts — add these
+
+export async function threadHasReplyFrom(
+  gmail: gmail_v1.Gmail,
+  threadId: string,
+  leadEmail: string,
+): Promise<boolean> {
+  const res = await withGmailRetry(() =>
+    gmail.users.threads.get({
+      userId: "me",
+      id: threadId,
+      format: "metadata",
+      metadataHeaders: ["From"],
+    }),
+  );
+  const messages = res.data.messages || [];
+  return messages.some((m) =>
+    (m.payload?.headers || []).some(
+      (h) =>
+        h.name === "From" &&
+        h.value?.toLowerCase().includes(leadEmail.toLowerCase()),
+    ),
+  );
+}
+
+function base64UrlEncode(str: string): string {
+  return Buffer.from(str)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+export interface SendEmailParams {
+  fromEmail: string;
+  toEmail: string;
+  subject: string;
+  bodyText: string;
+  inReplyToMessageId?: string; // RFC Message-ID header, e.g. "<abc@mail.gmail.com>"
+  threadId?: string;
+}
+
+export async function sendEmail(
+  gmail: gmail_v1.Gmail,
+  params: SendEmailParams,
+): Promise<{ id: string; threadId: string }> {
+  const headers = [
+    `From: ${params.fromEmail}`,
+    `To: ${params.toEmail}`,
+    `Subject: ${params.subject}`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=utf-8",
+  ];
+  if (params.inReplyToMessageId) {
+    headers.push(`In-Reply-To: ${params.inReplyToMessageId}`);
+    headers.push(`References: ${params.inReplyToMessageId}`);
+  }
+  const raw = base64UrlEncode(
+    `${headers.join("\r\n")}\r\n\r\n${params.bodyText}`,
+  );
+
+  const res = await withGmailRetry(() =>
+    gmail.users.messages.send({
+      userId: "me",
+      requestBody: { raw, threadId: params.threadId },
+    }),
+  );
+  if (!res.data.id || !res.data.threadId)
+    throw new Error("Gmail send did not return id/threadId");
+  return { id: res.data.id, threadId: res.data.threadId };
+}
 export function isPermanentAuthError(err: any): boolean {
   const code = err?.code || err?.response?.status;
   const reason = err?.response?.data?.error || err?.message || "";

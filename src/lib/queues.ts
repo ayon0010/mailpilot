@@ -23,7 +23,19 @@ const defaultQueueOpts: Partial<QueueOptions> = {
   },
 };
 
-export const QUEUE_NAMES = { send: "send-email" } as const;
+// export const QUEUE_NAMES = { send: "send-email" } as const;
+
+export const QUEUE_NAMES = {
+  send: "send-email",
+  followUp: "follow-up-plan",
+} as const;
+
+export function followUpQueue() {
+  return new Queue(QUEUE_NAMES.followUp, {
+    connection: connection(),
+    ...defaultQueueOpts,
+  });
+}
 
 export function sendQueue() {
   return new Queue(QUEUE_NAMES.send, {
