@@ -10,10 +10,23 @@ import { prisma } from "@/lib/prisma";
 import { followUpQueue, SendJobPayload } from "@/lib/queues";
 import { Job } from "bullmq";
 
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[\s_-]/g, "");
+}
+
 function renderTemplate(template: string, fields: Record<string, any>): string {
+  // Build a normalized lookup once per render, so "First Name", "firstname",
+  // "FirstName" etc. all resolve to the same merge tag.
+  const normalizedFields = new Map<string, any>();
+  for (const [k, v] of Object.entries(fields || {})) {
+    normalizedFields.set(normalizeKey(k), v);
+  }
+
   return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
-    const value = fields?.[key];
-    return value === undefined || value === null ? "" : String(value);
+    const value = normalizedFields.get(normalizeKey(key));
+    return value === undefined || value === null || value === ""
+      ? ""
+      : String(value);
   });
 }
 
@@ -22,18 +35,20 @@ async function getRfcMessageId(
   messageId: string,
   accountId: string,
 ): Promise<string | undefined> {
-  const res = (await withGmailRetry(
+  const res = await withGmailRetry(
     () =>
       gmail.users.messages.get({
         userId: "me",
         id: messageId,
         format: "metadata",
-        metadataHeaders: ["Message-ID"],
+        metadataHeaders: ["Message-Id"],
       }),
     { accountId },
-  )) as any;
-  return res.data.payload?.headers?.find((h: any) => h.name === "Message-ID")
-    ?.value;
+  );
+  // Match case-insensitively too, since header casing can vary by client/relay.
+  return res.data.payload?.headers?.find(
+    (h: any) => h.name?.toLowerCase() === "message-id",
+  )?.value;
 }
 
 export async function processSendJob(job: Job<SendJobPayload>): Promise<void> {
@@ -132,6 +147,11 @@ export async function processSendJob(job: Job<SendJobPayload>): Promise<void> {
         priorSend.gmailMessageId,
         account.id,
       );
+      if (!inReplyToMessageId) {
+        console.warn(
+          `Could not resolve Message-Id for prior send ${priorSend.gmailMessageId} — follow-up will send without proper threading headers`,
+        );
+      }
     }
 
     const result = await sendEmail(gmail, {

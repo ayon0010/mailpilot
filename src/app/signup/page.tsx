@@ -1,10 +1,10 @@
 "use client";
 
-import { LoginForm } from "@/components/login-form";
+import { SignupForm } from "@/components/signup-form";
+import logo from "../../../public/Gemini_Generated_Image_dq88xxdq88xxdq88.webp";
 import Image from "next/image";
-import logo from "../../public/Gemini_Generated_Image_dq88xxdq88xxdq88.webp";
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -19,7 +19,7 @@ export default function LoginPage() {
           Mail Pilot.
           <br /> by Janitorial Appointment
         </a>
-        <LoginForm />
+        <SignupForm />
       </div>
     </div>
   );

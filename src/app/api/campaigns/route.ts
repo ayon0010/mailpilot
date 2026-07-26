@@ -16,9 +16,11 @@ const createSchema = z.object({
   segmentByLeadTimezone: z.boolean().default(false),
 });
 
+// app/api/campaigns/route.ts — add a GET alongside your existing POST
 export async function GET() {
   const campaigns = await prisma.campaign.findMany({
     orderBy: { createdAt: "desc" },
+    include: { _count: { select: { leads: true, sendJobs: true } } },
   });
   return NextResponse.json({ campaigns });
 }

@@ -28,7 +28,39 @@ const defaultQueueOpts: Partial<QueueOptions> = {
 export const QUEUE_NAMES = {
   send: "send-email",
   followUp: "follow-up-plan",
+  healthCheck: "health-check",
+  warmupSend: "warmup-send", // ← add this
+  warmupDailyPlan: "warmup-daily-plan",
+  inboxSync: "inbox-sync",
 } as const;
+
+export function warmupSendQueue() {
+  return new Queue(QUEUE_NAMES.warmupSend, {
+    connection: connection(),
+    ...defaultQueueOpts,
+  });
+}
+
+export function inboxSyncQueue() {
+  return new Queue(QUEUE_NAMES.inboxSync, {
+    connection: connection(),
+    ...defaultQueueOpts,
+  });
+}
+
+export function warmupDailyPlanQueue() {
+  return new Queue(QUEUE_NAMES.warmupDailyPlan, {
+    connection: connection(),
+    ...defaultQueueOpts,
+  });
+}
+
+export function healthCheckQueue() {
+  return new Queue(QUEUE_NAMES.healthCheck, {
+    connection: connection(),
+    ...defaultQueueOpts,
+  });
+}
 
 export function followUpQueue() {
   return new Queue(QUEUE_NAMES.followUp, {
