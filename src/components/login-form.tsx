@@ -11,11 +11,13 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginFormValues, loginSchema } from "@/schemas/login";
-
+import { signIn } from "next-auth/react";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
@@ -33,10 +35,63 @@ export function LoginForm({
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
-    console.log(data);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
-    // login logic
+  console.log(callbackUrl);
+
+  const onSubmit = async (data: LoginFormValues) => {
+    Swal.fire({
+      title: "Signing in...",
+      text: "Please wait.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    try {
+      const res = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      Swal.close();
+
+      if (res?.ok) {
+        await Swal.fire({
+          icon: "success",
+          title: "Login Successful",
+          timer: 1200,
+          showConfirmButton: false,
+        });
+
+        router.push(callbackUrl);
+        return;
+      }
+
+      await Swal.fire({
+        icon: "error",
+        title: "Login Failed",
+        text:
+          res?.error === "CredentialsSignin"
+            ? "Invalid email or password."
+            : res?.error || "Something went wrong.",
+      });
+    } catch (error) {
+      Swal.close();
+
+      await Swal.fire({
+        icon: "error",
+        title: "Oops!",
+        text: "An unexpected error occurred. Please try again.",
+      });
+
+      console.error(error);
+    }
   };
 
   return (
