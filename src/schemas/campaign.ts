@@ -4,7 +4,7 @@ export const createSchema = z.object({
   name: z.string().min(1),
   subjectTemplate: z.string().default(""),
   bodyTemplate: z.string().default(""),
-  followUpSubjectTemplate: z.string().default(""),
+  followUpSubjectTemplate: z.string().default("").optional(),
   followUpBodyTemplate: z.string().default(""),
   followUpDays: z.number().int().min(2).max(5).default(4),
   targetTimezone: z.string().default("America/New_York"),

@@ -3,9 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+// app/api/accounts/[id]/route.ts
 const patchSchema = z.object({
   dailyLimit: z.number().int().positive().optional(),
-  status: z.enum(["active", "paused"]).optional(), // manual pause/reactivate too, while we're here
+  status: z.enum(["active", "paused"]).optional(),
+  displayName: z.string().optional(), // ← add this
 });
 
 export async function PATCH(

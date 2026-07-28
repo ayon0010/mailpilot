@@ -33,6 +33,15 @@ export default function AccountsPage() {
     load();
   }
 
+  async function updateDisplayName(id: string, value: string) {
+    await fetch(`/api/accounts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName: value }),
+    });
+    load();
+  }
+
   return (
     <div style={{ padding: 24, fontFamily: "system-ui" }}>
       <h1>Accounts</h1>
@@ -43,6 +52,7 @@ export default function AccountsPage() {
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>
             <th>Email</th>
+            <th>Display Name</th>
             <th>Status</th>
             <th>Warmup</th>
             <th>Daily Limit</th>
@@ -55,6 +65,14 @@ export default function AccountsPage() {
           {accounts.map((a) => (
             <tr key={a.id} style={{ borderBottom: "1px solid #eee" }}>
               <td>{a.email}</td>
+              <td>
+                <input
+                  defaultValue={a.displayName}
+                  placeholder="e.g. Ethan"
+                  style={{ width: 100 }}
+                  onBlur={(e) => updateDisplayName(a.id, e.target.value)}
+                />
+              </td>
               <td>{a.status}</td>
               <td>{a.warmupEnabled ? `day ${a.warmupDay}` : "graduated"}</td>
               <td>

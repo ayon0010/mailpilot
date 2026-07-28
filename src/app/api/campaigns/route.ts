@@ -3,9 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { createSchema } from "@/schemas/campaign";
 import { NextRequest, NextResponse } from "next/server";
 
-
-
-
 // app/api/campaigns/route.ts — add a GET alongside your existing POST
 export async function GET() {
   const campaigns = await prisma.campaign.findMany({
@@ -24,7 +21,7 @@ export async function POST(req: NextRequest) {
     );
 
   const data = parsed.data;
-  
+
   if (data.sendWindowStart >= data.sendWindowEnd) {
     return NextResponse.json(
       { error: "sendWindowStart must be before sendWindowEnd" },
@@ -37,3 +34,5 @@ export async function POST(req: NextRequest) {
   });
   return NextResponse.json({ campaign }, { status: 201 });
 }
+
+

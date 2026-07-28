@@ -15,6 +15,8 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 
 import { CampaignFormValues, createSchema } from "@/schemas/campaign";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 export default function CampaignForm() {
   const {
@@ -37,8 +39,56 @@ export default function CampaignForm() {
     },
   });
 
-  const onSubmit = (data: CampaignFormValues) => {
-    console.log(data);
+  const router = useRouter();
+
+  const onSubmit = async (data: CampaignFormValues) => {
+    Swal.fire({
+      title: "Signing in...",
+      text: "Please wait.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+    try {
+      const res = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      Swal.close();
+
+      if (result.campaign) {
+        await Swal.fire({
+          icon: "success",
+          title: "Created Successful",
+          timer: 1200,
+          showConfirmButton: false,
+        });
+
+        router.push(`/dashboard/campaigns/${result.campaign.id}`);
+        return;
+      }
+      await Swal.fire({
+        icon: "error",
+        title: "Creation Failed",
+        text: `Something went wrong`,
+      });
+    } catch (error) {
+      Swal.close();
+
+      await Swal.fire({
+        icon: "error",
+        title: "Oops!",
+        text: "An unexpected error occurred. Please try again.",
+      });
+
+      console.error(error);
+    }
   };
 
   return (
@@ -86,13 +136,10 @@ export default function CampaignForm() {
               type="number"
               min={2}
               max={5}
-              {...register("followUpDays")}
+              {...register("followUpDays", {
+                valueAsNumber: true,
+              })}
             />
-            {errors.followUpDays && (
-              <p className="text-sm text-red-500">
-                {errors.followUpDays.message}
-              </p>
-            )}
           </Field>
         </FieldGroup>
 
@@ -123,7 +170,7 @@ export default function CampaignForm() {
         </FieldGroup>
       </div>
 
-      <Button className="mt-6" type="submit">
+      <Button className="mt-6 cursor-pointer" type="submit">
         Create Campaign
       </Button>
     </form>

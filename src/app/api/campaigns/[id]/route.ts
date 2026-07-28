@@ -14,3 +14,29 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ campaign });
 }
+
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+
+    await prisma.campaign.delete({
+      where: { id },
+    });
+
+    return NextResponse.json(
+      { message: "Campaign deleted successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { message: "Failed to delete campaign" },
+      { status: 500 },
+    );
+  }
+}

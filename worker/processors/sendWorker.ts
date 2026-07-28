@@ -15,14 +15,11 @@ function normalizeKey(key: string): string {
 }
 
 function renderTemplate(template: string, fields: Record<string, any>): string {
-  // Build a normalized lookup once per render, so "First Name", "firstname",
-  // "FirstName" etc. all resolve to the same merge tag.
   const normalizedFields = new Map<string, any>();
   for (const [k, v] of Object.entries(fields || {})) {
     normalizedFields.set(normalizeKey(k), v);
   }
-
-  return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
+  return template.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_, key) => {
     const value = normalizedFields.get(normalizeKey(key));
     return value === undefined || value === null || value === ""
       ? ""
@@ -121,7 +118,10 @@ export async function processSendJob(job: Job<SendJobPayload>): Promise<void> {
     }
   }
 
-  const fields = lead.fields as Record<string, any>;
+  const fields = {
+    ...(lead.fields as Record<string, any>),
+    "sender name": account.displayName || account.email, // available as {{sender name}}
+  };
   const subject = isFollowUp
     ? renderTemplate(
         campaign.followUpSubjectTemplate || campaign.subjectTemplate,
@@ -155,7 +155,9 @@ export async function processSendJob(job: Job<SendJobPayload>): Promise<void> {
     }
 
     const result = await sendEmail(gmail, {
-      fromEmail: account.email,
+      fromEmail: account.displayName
+        ? `"${account.displayName}" <${account.email}>`
+        : account.email,
       toEmail: lead.email,
       subject:
         isFollowUp && !subject.startsWith("Re:") ? `Re: ${subject}` : subject,

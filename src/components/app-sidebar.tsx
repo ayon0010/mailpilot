@@ -28,6 +28,7 @@ import {
   RiSearchLine,
   RiDatabase2Line,
   RiFileChartLine,
+  RiApps2Line,
   RiFileLine,
 } from "@remixicon/react";
 import Image from "next/image";
@@ -41,9 +42,9 @@ const data = {
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "#",
-      icon: <RiDashboardLine />,
+      title: "All Campaigns",
+      url: "/dashboard/campaigns",
+      icon: <RiApps2Line />,
     },
     {
       title: "Lifecycle",
