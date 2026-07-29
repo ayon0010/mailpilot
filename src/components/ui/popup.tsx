@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,11 +11,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  RiDeleteBin6Line,
-  RiFlipVerticalFill,
-} from "@remixicon/react";
+import { RiDeleteBin6Line, RiFlipVerticalFill } from "@remixicon/react";
 import { Switch } from "./switch";
+import { useRouter } from "next/navigation";
 
 // Google G Logo SVG
 function GoogleIcon() {
@@ -41,20 +39,108 @@ function GoogleIcon() {
   );
 }
 
-export function MailboxSettingsModal() {
-  const [fromName, setFromName] = useState("Jane at Example");
-  const [dailyCap, setDailyCap] = useState("10");
+export function MailboxSettingsModal({ id }: { id: string }) {
+  const [fromName, setFromName] = useState("");
+  const [dailyCap, setDailyCap] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [prevStatus, setPrevStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/accounts/${id}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch account");
+        }
+        const accountData = await response.json();
+        const { data } = accountData;
+        setEmail(data?.email);
+        setFromName(data?.displayName);
+        setPaused(data?.status === "paused");
+        setPrevStatus(data.status);
+        setDailyCap(data?.dailyLimit);
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (id) {
+      fetchData();
+    }
+  }, [id]);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      const update = await fetch(`/api/accounts/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dailyLimit: Number(dailyCap),
+          displayName: fromName,
+          status: paused ? "paused" : prevStatus,
+        }),
+      });
+
+      console.log(update);
+
+      if (update.ok) {
+        // Close modal on success
+        router.refresh();
+        setOpen(false);
+      } else {
+        console.error("Failed to update settings");
+      }
+    } catch (error) {
+      console.error("Error updating settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteFn = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(`/api/accounts/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete mailbox");
+      }
+
+      // Close the modal
+      setOpen(false);
+
+      // Refresh the page/data
+      router.refresh();
+    } catch (error) {
+      console.error("Error deleting mailbox:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-slate-400 hover:text-slate-600"
-        >
+        <div className="h-8 w-8 text-slate-400 hover:text-slate-600">
           <RiFlipVerticalFill className="h-4 w-4" />
-        </Button>
+        </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] p-0 rounded-2xl gap-0 overflow-hidden bg-[#F8F9FB] border-none shadow-2xl">
         {/* Custom Header */}
@@ -65,9 +151,7 @@ export function MailboxSettingsModal() {
               <span>Mailbox settings</span>
             </DialogTitle>
             <div className="flex items-center gap-2 pt-0.5">
-              <span className="text-sm text-slate-500">
-                oliver.finch112@gmail.com
-              </span>
+              <span className="text-sm text-slate-500">{email}</span>
               <Badge
                 variant="outline"
                 className="rounded-full border-emerald-300 bg-emerald-50 text-[11px] font-medium text-emerald-700 px-2.5 py-0.5 hover:bg-emerald-50"
@@ -98,9 +182,9 @@ export function MailboxSettingsModal() {
                 Daily cap
               </label>
               <Input
+                type="number"
                 value={dailyCap}
                 onChange={(e) => setDailyCap(e.target.value)}
-                className="bg-[#F1F3F7] border-none focus-visible:ring-1 focus-visible:ring-slate-300 text-slate-700 rounded-xl h-11 text-center font-medium"
               />
             </div>
           </div>
@@ -115,8 +199,8 @@ export function MailboxSettingsModal() {
               </p>
             </div>
             <Switch
-              // checked={isPaused}
-              // onCheckedChange={setIsPaused}
+              checked={paused}
+              onCheckedChange={setPaused}
               className="data-[state=checked]:bg-amber-600"
             />
           </div>
@@ -124,6 +208,7 @@ export function MailboxSettingsModal() {
           {/* Action Buttons Row */}
           <div className="flex items-center gap-2 pt-2 pb-1">
             <Button
+              onClick={() => deleteFn()}
               variant="ghost"
               className="rounded-xl text-slate-600 hover:text-red-600 hover:bg-red-50 text-xs font-medium h-9 px-3.5 ml-auto flex items-center gap-1.5"
             >
@@ -142,14 +227,14 @@ export function MailboxSettingsModal() {
         {/* Modal Footer */}
         <div className="p-6 pt-4 flex items-center justify-end gap-3 bg-[#F8F9FB]">
           <DialogClose>
-            <Button
-              variant="ghost"
-              className="text-slate-800 hover:bg-slate-200/50 rounded-xl font-medium px-4"
-            >
+            <div className="text-slate-800 hover:bg-slate-200/50 rounded-xl font-medium px-4">
               Cancel
-            </Button>
+            </div>
           </DialogClose>
-          <Button className="rounded-xl bg-gradient-to-b from-[#E6BA5D] to-[#D8A23B] hover:from-[#DFB253] hover:to-[#CF9932] text-slate-900 font-medium px-5 h-10 shadow-sm transition-all border border-white/20">
+          <Button
+            onClick={() => handleSubmit()}
+            className="rounded-xl bg-gradient-to-b from-[#E6BA5D] to-[#D8A23B] hover:from-[#DFB253] hover:to-[#CF9932] text-slate-900 font-medium px-5 h-10 shadow-sm transition-all border border-white/20"
+          >
             Save settings
           </Button>
         </div>

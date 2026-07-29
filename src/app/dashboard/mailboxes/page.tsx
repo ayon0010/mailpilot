@@ -14,12 +14,15 @@ import { Button } from "@/components/ui/button";
 import { RiShieldCheckFill } from "@remixicon/react";
 import { RiAddLine } from "@remixicon/react";
 import { MailboxSettingsModal } from "@/components/ui/popup";
+import Link from "next/link";
 
 export function ConnectMailboxButton() {
   return (
     <Button className="rounded-full bg-gradient-to-b from-[#E6BA5D] to-[#D8A23B] hover:from-[#DFB253] hover:to-[#CF9932] text-slate-900 font-medium px-5 py-2.5 shadow-sm border border-white/20 transition-all flex items-center gap-2">
       <RiAddLine className="w-5 h-5 stroke-[0.5]" />
-      <span>Connect mailbox</span>
+      <span>
+        <Link href={"/api/auth/gmail/connect"}>Connect mailbox</Link>
+      </span>
     </Button>
   );
 }
@@ -49,7 +52,9 @@ function GoogleIcon() {
 }
 
 export async function MailboxTable() {
-  const response = await fetch(`${process.env.PUBLIC_URL}/api/accounts`);
+  const response = await fetch(`${process.env.PUBLIC_URL}/api/accounts`, {
+    cache: "no-store",
+  });
   const data = await response.json();
 
   const { accounts } = data;
@@ -97,7 +102,7 @@ export async function MailboxTable() {
 
               {/* Daily Cap Column */}
               <TableCell className="py-3.5 text-sm text-slate-600">
-                {row.dailyLimit}
+                {row.dailyLimit}/day
               </TableCell>
 
               {/* Status Column */}
@@ -120,7 +125,7 @@ export async function MailboxTable() {
 
               {/* Action Column */}
               <TableCell className="py-3.5 pr-6 text-right">
-                <MailboxSettingsModal />
+                <MailboxSettingsModal id={row.id} />
               </TableCell>
             </TableRow>
           ))}

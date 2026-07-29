@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.redirect(new URL("/dashboard/?connected=1", req.url));
+    return NextResponse.redirect(new URL("/dashboard/mailboxes/?connected=1", req.url));
   } catch (err: any) {
     return NextResponse.redirect(
       new URL(

@@ -16,8 +16,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
-  RiDashboardLine,
-  RiListUnordered,
+  
   RiBarChartLine,
   RiFolderLine,
   RiGroupLine,
@@ -28,8 +27,9 @@ import {
   RiSearchLine,
   RiDatabase2Line,
   RiFileChartLine,
-  RiApps2Line,
   RiFileLine,
+  RiMailAiLine,
+  RiMessage2Line,
 } from "@remixicon/react";
 import Image from "next/image";
 import logo from "../../public/Gemini_Generated_Image_dq88xxdq88xxdq88.webp";
@@ -42,14 +42,14 @@ const data = {
   },
   navMain: [
     {
-      title: "All Campaigns",
+      title: "Campaigns",
       url: "/dashboard/campaigns",
-      icon: <RiApps2Line />,
+      icon: <RiMessage2Line />,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: <RiListUnordered />,
+      title: "Mailboxes",
+      url: "/dashboard/mailboxes",
+      icon: <RiMailAiLine />,
     },
     {
       title: "Analytics",

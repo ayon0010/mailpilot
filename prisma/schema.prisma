@@ -56,7 +56,7 @@ model GmailAccount {
   accessToken  String?
   tokenExpiry  DateTime?
 
-  dailyLimit  Int      @default(25)
+  dailyLimit  Int      @default(10)
   sentToday   Int      @default(0)
   lastResetAt DateTime @default(now())
 
