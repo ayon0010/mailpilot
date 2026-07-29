@@ -1,111 +1,152 @@
-"use client"
-
-import { Badge } from "@/components/ui/badge"
+"use client";
 import {
   Card,
-  CardAction,
+  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { RiArrowUpLine, RiArrowDownLine } from "@remixicon/react"
+} from "@/components/ui/card";
+import {
+  RiMailAiLine,
+  RiSendInsFill,
+  RiSendPlane2Fill,
+  RiUser2Line,
+} from "@remixicon/react";
+import { Button } from "./ui/button";
+import Link from "next/link";
+
+export function MailboxCard() {
+  return (
+    <Card className="flex flex-1 flex-col justify-between">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <RiMailAiLine className="h-5 w-5 text-amber-700" />
+          <CardTitle className="text-lg font-bold">Mailboxes</CardTitle>
+        </div>
+        <CardDescription>The accounts you send campaigns from.</CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold">1</span>
+          <span className="text-sm text-muted-foreground">of 1 connected</span>
+        </div>
+
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Connected</span>
+            <span className="font-semibold">1</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Need attention</span>
+            <span className="font-semibold">0</span>
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter>
+        <Link className="w-full" href={"/dashboard/mailboxes"}>
+          <Button variant="outline" className="w-full">
+            Manage mailboxes
+          </Button>
+        </Link>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export function SendsThisMonthCard() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Sends This Month
+        </CardTitle>
+        <div className="rounded-md bg-amber-100/60 p-2 text-amber-800">
+          <RiSendInsFill className="h-4 w-4" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">0</div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          No campaigns launched yet
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ContactsCard() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Contacts
+        </CardTitle>
+        <div className="rounded-md bg-amber-100/60 p-2">
+          <RiUser2Line className="h-4 w-4" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">1</div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          1 sendable · 0 suppressed
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function CampaignsCard() {
+  return (
+    <Card className="flex flex-1 flex-col justify-between">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <RiSendPlane2Fill className="h-5 w-5 rotate-45 text-amber-800" />
+          <CardTitle className="text-lg font-bold">Campaigns</CardTitle>
+        </div>
+        <CardDescription>What's live and what's in the works.</CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold">1</span>
+          <span className="text-sm text-muted-foreground">active now</span>
+        </div>
+
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Drafts</span>
+            <span className="font-semibold">0</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Total</span>
+            <span className="font-semibold">1</span>
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter>
+        <Button variant="outline" className="w-full">
+          View campaigns
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
 
 export function SectionCards() {
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <RiArrowUpLine
-              />
-              +12.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month{" "}
-            <RiArrowUpLine className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Visitors for the last 6 months
-          </div>
-        </CardFooter>
-      </Card>
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>New Customers</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <RiArrowDownLine
-              />
-              -20%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period{" "}
-            <RiArrowDownLine className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Acquisition needs attention
-          </div>
-        </CardFooter>
-      </Card>
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <RiArrowUpLine
-              />
-              +12.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention{" "}
-            <RiArrowUpLine className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
-        </CardFooter>
-      </Card>
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <RiArrowUpLine
-              />
-              +4.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase{" "}
-            <RiArrowUpLine className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
-        </CardFooter>
-      </Card>
+    <div className="px-4 lg:px-6 space-y-6">
+      <div className="grid grid-cols-4 gap-6">
+        <ContactsCard />
+        <SendsThisMonthCard />
+      </div>
+      <div className="flex items-center gap-6 w-full">
+        <MailboxCard />
+        <CampaignsCard />
+      </div>
     </div>
-  )
+  );
 }
